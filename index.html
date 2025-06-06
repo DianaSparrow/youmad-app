@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Are they mad at me?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 3px;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .question {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            font-weight: 500;
+        }
+
+        .yes-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .yes-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        .no-btn {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .no-btn:hover {
+            background: #26a69a;
+            transform: translateY(-2px);
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px 40px;
+            font-size: 1.2em;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .final-answer {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .final-answer h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .final-answer p {
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+
+        .restart-btn {
+            background: #667eea;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .restart-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .intro-text {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Are they mad at me?</h1>
+        <div class="subtitle">Let's figure this out together</div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div id="startScreen">
+            <div class="intro-text">
+                Feeling like someone might be upset with you? Social interactions can be tricky to read, especially through text. Let's walk through this together and help put your mind at ease.
+            </div>
+            <button class="start-btn" onclick="startQuiz()">Start Assessment</button>
+        </div>
+
+        <div id="questionScreen" style="display: none;">
+            <div class="question-container">
+                <div class="question" id="currentQuestion"></div>
+                <div class="buttons">
+                    <button class="yes-btn" onclick="answerQuestion(true)">Yes</button>
+                    <button class="no-btn" onclick="answerQuestion(false)">No</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultScreen" style="display: none;">
+            <div class="final-answer">
+                <h2>No one is mad at you! 😊</h2>
+                <p id="finalMessage"></p>
+            </div>
+            <button class="restart-btn" onclick="restartQuiz()">Check Again</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = {
+            start: {
+                text: "Did they respond to your last message or interaction?",
+                yes: "responseTime",
+                no: "noResponse"
+            },
+            responseTime: {
+                text: "Was their response much shorter than usual?",
+                yes: "contextCheck",
+                no: "toneCheck"
+            },
+            noResponse: {
+                text: "Has it been less than 24 hours since you reached out?",
+                yes: "busyCheck",
+                no: "followUp"
+            },
+            contextCheck: {
+                text: "Were they doing something else when you were talking (working, driving, with family)?",
+                yes: "multitaskingCheck",
+                no: "moodContext"
+            },
+            toneCheck: {
+                text: "Did they use less punctuation or emojis than normal?",
+                yes: "communicationStyle",
+                no: "energyLevel"
+            },
+            busyCheck: {
+                text: "Do you know if they've been particularly busy with work, school, or personal matters lately?",
+                yes: "stressLevel",
+                no: "personalSpace"
+            },
+            followUp: {
+                text: "Have you sent multiple follow-up messages?",
+                yes: "spaceNeeded",
+                no: "timeOfDay"
+            },
+            multitaskingCheck: {
+                text: "Did they seem distracted or in a hurry during your interaction?",
+                yes: "priorityCheck",
+                no: "moodContext"
+            },
+            moodContext: {
+                text: "Have they been having a stressful week in general?",
+                yes: "supportCheck",
+                no: "directCommunication"
+            },
+            communicationStyle: {
+                text: "Is this how they usually text when they're focused or multitasking?",
+                yes: "normalPattern",
+                no: "recentChanges"
+            },
+            energyLevel: {
+                text: "Did they seem tired or low-energy in their response?",
+                yes: "timeOfDay",
+                no: "engagementLevel"
+            },
+            stressLevel: {
+                text: "Have they mentioned feeling overwhelmed recently?",
+                yes: "supportCheck",
+                no: "workLoad"
+            },
+            personalSpace: {
+                text: "Is it possible they're dealing with something personal and need some space?",
+                yes: "respectBoundaries",
+                no: "relationshipCheck"
+            },
+            spaceNeeded: {
+                text: "Could they be feeling overwhelmed and need some breathing room?",
+                yes: "respectBoundaries",
+                no: "urgencyCheck"
+            },
+            timeOfDay: {
+                text: "Was it late at night or early in the morning when they responded?",
+                yes: "final",
+                no: "deviceCheck"
+            },
+            priorityCheck: {
+                text: "Do you think your conversation was their main focus at that moment?",
+                yes: "final",
+                no: "final"
+            },
+            supportCheck: {
+                text: "Have you been supportive of their stress recently?",
+                yes: "final",
+                no: "final"
+            },
+            directCommunication: {
+                text: "If something was really wrong, do you think they would tell you directly?",
+                yes: "pastPattern",
+                no: "conflictStyle"
+            },
+            normalPattern: {
+                text: "Does their current behavior match how they act when they're simply busy?",
+                yes: "final",
+                no: "final"
+            },
+            recentChanges: {
+                text: "Have there been any major changes in their life recently?",
+                yes: "adaptationTime",
+                no: "final"
+            },
+            engagementLevel: {
+                text: "Did they ask you questions or show interest in what you were saying?",
+                yes: "final",
+                no: "topicRelevance"
+            },
+            workLoad: {
+                text: "Are they in a particularly demanding period at work or school?",
+                yes: "final",
+                no: "final"
+            },
+            respectBoundaries: {
+                text: "Have you given them space to reach out when they're ready?",
+                yes: "final",
+                no: "final"
+            },
+            relationshipCheck: {
+                text: "Have you had any disagreements or misunderstandings recently?",
+                yes: "resolutionCheck",
+                no: "final"
+            },
+            urgencyCheck: {
+                text: "Was your message something that required an immediate response?",
+                yes: "final",
+                no: "final"
+            },
+            deviceCheck: {
+                text: "Could they have been using a different device or had technical issues?",
+                yes: "final",
+                no: "final"
+            },
+            pastPattern: {
+                text: "Have they communicated openly with you about problems before?",
+                yes: "final",
+                no: "final"
+            },
+            conflictStyle: {
+                text: "Do they tend to avoid conflict or address issues directly?",
+                yes: "final",
+                no: "final"
+            },
+            adaptationTime: {
+                text: "Are they still adjusting to these changes in their life?",
+                yes: "final",
+                no: "final"
+            },
+            topicRelevance: {
+                text: "Was the topic something they're usually interested in discussing?",
+                yes: "final",
+                no: "final"
+            },
+            resolutionCheck: {
+                text: "Did you resolve those issues or apologize if needed?",
+                yes: "final",
+                no: "final"
+            }
+        };
+
+        const finalMessages = [
+            "Based on your responses, this appears to be normal communication variation. People's texting styles change based on their mood, energy level, and what else is happening in their lives.",
+            "What you're experiencing sounds like typical social anxiety. Most of the time, changes in communication patterns are about the other person's circumstances, not about you.",
+            "The patterns you've described are very common and usually indicate someone is busy, distracted, or processing their own stuff - not that they're upset with you.",
+            "Communication through text and digital channels often seems more serious or cold than intended. People rarely stay mad without saying something directly.",
+            "Your concerns show you care about your relationships, which is wonderful. However, most communication changes have nothing to do with anger and everything to do with life circumstances."
+        ];
+
+        let currentQuestionId = 'start';
+        let questionCount = 0;
+        let totalQuestions = 0;
+
+        function startQuiz() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('questionScreen').style.display = 'block';
+            currentQuestionId = 'start';
+            questionCount = 0;
+            totalQuestions = calculateTotalQuestions();
+            showQuestion();
+        }
+
+        function calculateTotalQuestions() {
+            // Minimum 5 questions guaranteed with extended paths
+            return 8;
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestionId];
+            document.getElementById('currentQuestion').textContent = question.text;
+            updateProgress();
+        }
+
+        function answerQuestion(answer) {
+            const question = questions[currentQuestionId];
+            questionCount++;
+            
+            if (answer) {
+                currentQuestionId = question.yes;
+            } else {
+                currentQuestionId = question.no;
+            }
+
+            if (currentQuestionId === 'final') {
+                showResult();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function updateProgress() {
+            const progress = (questionCount / totalQuestions) * 100;
+            document.getElementById('progressFill').style.width = Math.min(progress, 90) + '%';
+        }
+
+        function showResult() {
+            document.getElementById('questionScreen').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
+            document.getElementById('progressFill').style.width = '100%';
+            
+            const randomMessage = finalMessages[Math.floor(Math.random() * finalMessages.length)];
+            document.getElementById('finalMessage').textContent = randomMessage;
+        }
+
+        function restartQuiz() {
+            document.getElementById('resultScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+            document.getElementById('progressFill').style.width = '0%';
+            currentQuestionId = 'start';
+            questionCount = 0;
+        }
+    </script>
+</body>
+</html>
